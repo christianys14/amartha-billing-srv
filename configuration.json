@@ -1,0 +1,6 @@
+{
+  "custom.dummy.customers" : "3",
+  "app.billing.version" : "1.0.0",
+  "server.address.http" : ":5051",
+  "custom.weeks" : "50"
+}
