@@ -30,15 +30,13 @@ type (
 	Service interface {
 		FetchOutstanding(ctx context.Context, uid string) (*FetchOutstandingResponse, error)
 
-		Payment(ctx context.Context, paymentRequest PaymentRequest) error
+		Payment(ctx context.Context, paymentRequest *PaymentRequest) error
 	}
 )
 
 func NewLoanService(
-	cfg configuration.Configuration,
 	loanRepository repository.LoanRepository) Service {
 	return &loanService{
-		cfg:            cfg,
 		loanRepository: loanRepository,
 		generate:       common.NewGenerate(),
 	}

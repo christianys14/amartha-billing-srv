@@ -35,7 +35,7 @@ var serveHttp = &cobra.Command{
 		}
 
 		loanRepository := repository.NewLoanRepository(masterDB)
-		loanService := loan.NewLoanService(cfg, loanRepository)
+		loanService := loan.NewLoanService(loanRepository)
 		loanController := loan.NewLoanController(loanService)
 
 		billingHttpServerAddress := cfg.GetString("server.address.http")
@@ -49,7 +49,7 @@ var serveHttp = &cobra.Command{
 
 		go func() {
 			log.Println(
-				"[Billing Controller HTTP] server started. Listening on port",
+				"[Billing Service HTTP] server started. Listening on port",
 				billingHttpServerAddress)
 
 			if err := billingHttpServer.ListenAndServe(); err != nil &&
@@ -63,9 +63,9 @@ var serveHttp = &cobra.Command{
 
 		<-done
 		if err := billingHttpServer.Shutdown(context.Background()); err != nil {
-			log.Println("[Billing Controller HTTP], shutdown has error", err)
+			log.Println("[Billing Service HTTP], shutdown has error", err)
 		} else {
-			log.Println("[Billing Controller HTTP] server stopped.")
+			log.Println("[Billing Service HTTP] server stopped.")
 		}
 	},
 }

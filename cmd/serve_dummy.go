@@ -40,9 +40,12 @@ var serveDummy = &cobra.Command{
 			userID := common.NewGenerate().Uuid()
 			currentTime := time.Date(2023, 8, 23, 18, 58, 0, 0, time.UTC)
 
+			amount := float64(5000000) / float64(numberOfWeeks)
+			amountWithFee := amount + (amount * 0.1)
+
 			le := repository.LoanEntity{
 				UserID:    userID,
-				Amount:    decimal.NewFromFloat(float64(110000)),
+				Amount:    decimal.NewFromFloat(amountWithFee),
 				CreatedAt: currentTime,
 				Version:   0,
 				UpdatedAt: currentTime,

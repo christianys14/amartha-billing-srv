@@ -45,7 +45,7 @@ func (_m *Service) FetchOutstanding(ctx context.Context, uid string) (*loan.Fetc
 }
 
 // Payment provides a mock function with given fields: ctx, paymentRequest
-func (_m *Service) Payment(ctx context.Context, paymentRequest loan.PaymentRequest) error {
+func (_m *Service) Payment(ctx context.Context, paymentRequest *loan.PaymentRequest) error {
 	ret := _m.Called(ctx, paymentRequest)
 
 	if len(ret) == 0 {
@@ -53,7 +53,7 @@ func (_m *Service) Payment(ctx context.Context, paymentRequest loan.PaymentReque
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, loan.PaymentRequest) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *loan.PaymentRequest) error); ok {
 		r0 = rf(ctx, paymentRequest)
 	} else {
 		r0 = ret.Error(0)

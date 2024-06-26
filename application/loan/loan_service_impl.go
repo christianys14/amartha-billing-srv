@@ -3,6 +3,8 @@ package loan
 import (
 	"context"
 	"errors"
+	"log"
+	"runtime/debug"
 
 	"github.com/shopspring/decimal"
 
@@ -10,14 +12,23 @@ import (
 )
 
 var (
-	errorValidation    = errors.New("validation request")
-	errorFromDatabase  = errors.New("from database")
-	errorDataNotExists = errors.New("data is not exists")
+	errorValidation         = errors.New("validation request")
+	errorFromDatabase       = errors.New("from database")
+	errorDataNotExists      = errors.New("data is not exists")
+	errorAmountShouldBeSame = errors.New("amount should be equals")
 )
 
 func (l *loanService) FetchOutstanding(
 	ctx context.Context,
-	uid string) (*FetchOutstandingResponse, error) {
+	uid string) (rsp *FetchOutstandingResponse, err error) {
+	defer func() {
+		if rec := recover(); rec != nil {
+			log.Println("unidentified error (yet)", string(debug.Stack()))
+			err = errorFromDatabase
+			return
+		}
+	}()
+
 	if uid == "" {
 		return nil, errorValidation
 	}
@@ -38,8 +49,46 @@ func (l *loanService) FetchOutstanding(
 		return nil, errorFromDatabase
 	}
 
-	totalClosed := 0
-	totalPending := 0
+	return l.identifyOutstanding(loans)
+}
+
+func (l *loanService) Payment(
+	ctx context.Context,
+	paymentRequest *PaymentRequest) (err error) {
+	defer func() {
+		if rec := recover(); rec != nil {
+			log.Println("unidentified error (yet)", string(debug.Stack()))
+			err = errorFromDatabase
+			return
+		}
+	}()
+
+	if paymentRequest.UserID == "" || paymentRequest.Amount == 0 {
+		return errorValidation
+	}
+
+	loans, errFindLoan := l.loanRepository.FindLoans(
+		ctx, &repository.LoanEntity{
+			Statuses: []string{"PENDING"},
+			UserID:   paymentRequest.UserID,
+			DueDate:  l.generate.Time(),
+		},
+	)
+
+	if errors.Is(errFindLoan, repository.ErrorNoRows) {
+		return errorDataNotExists
+	}
+
+	if errFindLoan != nil {
+		return errorFromDatabase
+	}
+
+	return l.makePayment(ctx, paymentRequest, loans)
+}
+
+func (l *loanService) identifyOutstanding(
+	loans []*repository.LoanEntity) (*FetchOutstandingResponse, error) {
+	totalClosed, totalPending := 0, 0
 	pendingAmountOutstanding := decimal.NewFromFloat(float64(0))
 
 	for _, val := range loans {
@@ -74,9 +123,39 @@ func (l *loanService) FetchOutstanding(
 	}, nil
 }
 
-func (l *loanService) Payment(
+func (l *loanService) makePayment(
 	ctx context.Context,
-	paymentRequest PaymentRequest) error {
-	//TODO implement me
-	panic("implement me")
+	paymentRequest *PaymentRequest,
+	loans []*repository.LoanEntity) error {
+	amount := decimal.NewFromFloat(paymentRequest.Amount)
+	totalAmount := decimal.NewFromFloat(float64(0))
+
+	var loanIDs []uint64
+	for _, loan := range loans {
+		totalAmount = totalAmount.Add(loan.Amount)
+		loanIDs = append(loanIDs, loan.ID)
+	}
+
+	if amount.LessThan(totalAmount) || amount.GreaterThan(totalAmount) {
+		return errorAmountShouldBeSame
+	}
+
+	//integrate with 3rd party for debit the money customer
+	//after the result of debit is success, then update the loan.
+	//push notif (if any)
+	//sent related marketing purposed, or any other activities.
+
+	errUpdate := l.loanRepository.UpdateLoan(
+		ctx, &repository.LoanEntityUpdate{
+			IDs:    loanIDs,
+			Status: "PAID",
+		},
+	)
+
+	if errUpdate != nil {
+		log.Println("failed update loan -> ", errUpdate)
+		return errorFromDatabase
+	}
+
+	return nil
 }

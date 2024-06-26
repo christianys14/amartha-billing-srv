@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"regexp"
 	"strings"
@@ -70,8 +71,63 @@ func (l *loanController) FindOutstanding(
 func (l *loanController) Payment(
 	writer http.ResponseWriter,
 	req *http.Request) {
-	//TODO implement me
-	panic("implement me")
+	var paymentRequest PaymentRequest
+	err := decodeJSONBody(writer, req, &paymentRequest)
+
+	if err != nil {
+		log.Println("validation decode json body -> ", err)
+
+		common.ToErrorResponse(
+			writer,
+			constant.HttpRc[constant.Validation],
+			constant.HttpRcDescription[constant.Validation],
+		)
+		return
+	}
+
+	ctx := context.Background()
+	ctx, cancelFunc := context.WithTimeout(ctx, time.Minute)
+	defer cancelFunc()
+
+	errPayment := l.srv.Payment(ctx, &paymentRequest)
+
+	if errPayment != nil {
+		if errors.Is(errPayment, errorValidation) {
+			common.ToErrorResponse(
+				writer,
+				constant.HttpRc[constant.Validation],
+				constant.HttpRcDescription[constant.Validation],
+			)
+			return
+		}
+
+		if errors.Is(errPayment, errorAmountShouldBeSame) {
+			common.ToErrorResponse(
+				writer,
+				constant.HttpRc[constant.PaymentAmountShouldBeEquals],
+				constant.HttpRcDescription[constant.PaymentAmountShouldBeEquals],
+			)
+			return
+		}
+
+		if errors.Is(errPayment, errorDataNotExists) {
+			common.ToErrorResponse(
+				writer,
+				constant.HttpRc[constant.DataNotFound],
+				constant.HttpRcDescription[constant.DataNotFound],
+			)
+			return
+		}
+
+		common.ToErrorResponse(
+			writer,
+			constant.HttpRc[constant.GeneralError],
+			constant.HttpRcDescription[constant.GeneralError],
+		)
+		return
+	}
+
+	common.ToSuccessResponse(writer, nil, nil)
 }
 
 type malformedRequestError struct {
