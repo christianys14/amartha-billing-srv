@@ -1,0 +1,16 @@
+*.exe
+*.log
+security/Gopkg.toml
+security/__debug_bin.log
+presenter/Gopkg.toml
+presenter/Gopkg.lock
+.vendor
+*.out
+coverage.xml
+lint.xml
+vendor
+.vscode
+.idea
+.idea/.gitignore
+.DS_Store
+history.db
