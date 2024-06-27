@@ -36,7 +36,11 @@ I've 2 command which is :
 3. update the detail of your port http through configuration.json (Optional)
 4. my current IDE is using Intellij IDEA, if you're using also, click main.go and run. After that "edit configurations" from run menu, and see "program arguments" put the argument you would like to run.
 5. run argument "serveDummy" first of all (Mandatory). Everytime this argument being triggered it would generated New of "customerID", etc.
-6. run argument "serveHttp".
+6. run argument "serveHttp". When it's running successfully, shows :
+```
+2024/06/27 21:10:19 show-billing-version ->  1.0.0
+2024/06/27 21:10:19 [Billing Service HTTP] server started. Listening on port :5051
+```
 7. when the argument "serveDummy" being run, it would be insert as details below :
     - customer 1
       + w1 - w5 = paid
