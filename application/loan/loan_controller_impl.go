@@ -110,11 +110,11 @@ func (l *loanController) Payment(
 			return
 		}
 
-		if errors.Is(errPayment, errorDataNotExists) {
+		if errors.Is(errPayment, errorNoPendingOutstanding) {
 			common.ToErrorResponse(
 				writer,
-				constant.HttpRc[constant.DataNotFound],
-				constant.HttpRcDescription[constant.DataNotFound],
+				constant.HttpRc[constant.ZeroOutstanding],
+				constant.HttpRcDescription[constant.ZeroOutstanding],
 			)
 			return
 		}

@@ -12,10 +12,11 @@ import (
 )
 
 var (
-	errorValidation         = errors.New("validation request")
-	errorFromDatabase       = errors.New("from database")
-	errorDataNotExists      = errors.New("data is not exists")
-	errorAmountShouldBeSame = errors.New("amount should be equals")
+	errorValidation           = errors.New("validation request")
+	errorFromDatabase         = errors.New("from database")
+	errorDataNotExists        = errors.New("data is not exists")
+	errorAmountShouldBeSame   = errors.New("amount should be equals")
+	errorNoPendingOutstanding = errors.New("customer has no zero outstanding")
 )
 
 func (l *loanService) FetchOutstanding(
@@ -75,12 +76,12 @@ func (l *loanService) Payment(
 		},
 	)
 
-	if errors.Is(errFindLoan, repository.ErrorNoRows) {
-		return errorDataNotExists
-	}
-
 	if errFindLoan != nil {
 		return errorFromDatabase
+	}
+
+	if len(loans) == 0 || loans == nil {
+		return errorNoPendingOutstanding
 	}
 
 	return l.makePayment(ctx, paymentRequest, loans)

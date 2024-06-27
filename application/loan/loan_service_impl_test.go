@@ -277,11 +277,11 @@ func Test_loanService_Payment(t *testing.T) {
 			args: args{
 				paymentRequest: payReq,
 			},
-			wantErr: errorDataNotExists,
+			wantErr: errorNoPendingOutstanding,
 			mockFunc: func() {
 				mockLoanRepo.
 					On("FindLoans", mock.Anything, mock.Anything).
-					Return(nil, repository.ErrorNoRows).
+					Return(nil, nil).
 					Once()
 			},
 		},
